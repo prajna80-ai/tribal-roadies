@@ -26,7 +26,7 @@
     </script>
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQXchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script id="leaflet-script" src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQXchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
@@ -40,7 +40,8 @@
             position: relative;
             width: 100%;
             height: 100%;
-            min-height: 350px;
+            min-height: 400px;
+            background-color: #cbd5e1;
         }
         #map {
             position: absolute;
@@ -48,10 +49,9 @@
             bottom: 0;
             left: 0;
             right: 0;
-            width: 100%;
-            height: 100%;
+            width: 100% !important;
+            height: 100% !important;
             z-index: 1;
-            background-color: #e5e7eb;
         }
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -82,7 +82,7 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans antialiased h-screen flex flex-col overflow-hidden select-none">
 
-    <!-- Top Header Bar -->
+    <!-- Top Mobile Header Bar -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 flex items-center justify-between z-20 shadow-sm shrink-0">
         <div class="flex items-center space-x-2.5">
             <div class="bg-brand-600 text-white w-9 h-9 rounded-xl flex items-center justify-center shadow-md shrink-0">
@@ -97,7 +97,7 @@
         </div>
 
         <div class="flex items-center space-x-2">
-            <button onclick="triggerNativeShare()" class="bg-brand-600 active:bg-brand-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition">
+            <button onclick="triggerNativeShare()" class="bg-brand-600 active:bg-brand-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition" title="Share Convoy">
                 <i class="fa-solid fa-share-nodes text-xs"></i> <span>Share</span>
             </button>
             <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center transition">
@@ -107,7 +107,7 @@
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main Mobile Layout Container -->
     <div class="flex-1 relative flex flex-col md:flex-row overflow-hidden">
 
         <!-- Mobile Drawer Side/Bottom Panel -->
@@ -129,7 +129,7 @@
             <!-- Scrollable Content Panels -->
             <div class="flex-1 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5">
                 
-                <!-- TAB 1: VEHICLES -->
+                <!-- TAB 1: FLEET & CAR MANAGEMENT -->
                 <div id="panel-fleet" class="space-y-3">
                     <div class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-3 space-y-2">
                         <div class="flex items-center justify-between text-xs font-bold text-brand-700 dark:text-brand-400">
@@ -137,7 +137,7 @@
                             <span id="activeDeviceLabel" class="bg-brand-600 text-white px-2 py-0.5 rounded-md text-[10px]">Car 1</span>
                         </div>
                         <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-tight">
-                            Select which vehicle this phone represents, then tap <strong>"Sync My Location"</strong> to show your live position.
+                            Select which vehicle this phone represents, then tap <strong>"Sync My Location"</strong> to set your real GPS coordinates.
                         </p>
                         <div class="grid grid-cols-2 gap-2 pt-1">
                             <button onclick="selectDeviceCar('car-1')" id="btn-device-car-1" class="py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs">
@@ -150,7 +150,7 @@
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Convoy Roster</h3>
+                        <h3 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Convoy Vehicles</h3>
                         <div class="flex items-center gap-1.5">
                             <button onclick="syncAssignedCarGPS()" class="text-xs bg-emerald-600 text-white active:bg-emerald-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 shadow-sm">
                                 <i class="fa-solid fa-location-crosshairs text-xs"></i> Sync My Location
@@ -182,7 +182,7 @@
                     </div>
                 </div>
 
-                <!-- TAB 3: STATS & ALERTS -->
+                <!-- TAB 3: CONVOY LIVE STATS & ALERTS -->
                 <div id="panel-convoy" class="hidden space-y-3">
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
@@ -214,7 +214,7 @@
         </aside>
 
         <!-- Interactive Map Viewport -->
-        <main class="flex-1 relative order-1 md:order-2 h-1/2 md:h-full min-h-[350px]">
+        <main class="flex-1 relative order-1 md:order-2 h-1/2 md:h-full min-h-[400px]">
             <div id="map-container">
                 <div id="map"></div>
             </div>
@@ -286,7 +286,8 @@
             </form>
         </div>
     </div>
-<!-- JavaScript Application Logic -->
+
+    <!-- JavaScript Application Core Logic -->
     <script>
         let map = null;
         let destMarker = null;
@@ -348,15 +349,25 @@
             useCurrentLocationForCar(activeDeviceCarId);
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
+        window.addEventListener('load', () => {
             renderFleetList();
             updateStats();
-            initMap();
+
+            if (typeof L !== 'undefined') {
+                initMap();
+            } else {
+                const leafletScript = document.getElementById('leaflet-script');
+                if (leafletScript) {
+                    leafletScript.addEventListener('load', () => {
+                        initMap();
+                    });
+                }
+            }
         });
 
         function initMap() {
             if (typeof L === 'undefined') {
-                setTimeout(initMap, 500);
+                setTimeout(initMap, 300);
                 return;
             }
 
@@ -366,10 +377,18 @@
                     attributionControl: false 
                 }).setView([20.5937, 78.9629], 5);
 
-                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                     maxZoom: 19,
+                    subdomains: 'abcd',
                     crossOrigin: true
-                }).addTo(map);
+                });
+
+                tileLayer.on('tileerror', function(error, tile) {
+                    console.warn('Primary tile failed, loading Esri fallback...');
+                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
+                });
+
+                tileLayer.addTo(map);
 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
@@ -377,8 +396,10 @@
                     setPresetDest(e.latlng.lat, e.latlng.lng, `Destination (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
                 });
 
+                map.invalidateSize();
                 setTimeout(() => { if (map) map.invalidateSize(); }, 200);
-                setTimeout(() => { if (map) map.invalidateSize(); }, 800);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 600);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
 
             } catch (err) {
                 console.error("Leaflet initialization error:", err);
@@ -746,3 +767,10 @@
     </script>
 </body>
 </html>
+```
+
+### Steps to update on GitHub:
+1. Copy the entire code block above (`index.html`).
+2. Go to your GitHub repository: `https://github.com/prajna80-ai/tribal-roadies/edit/main/index.html`
+3. Replace all existing text and click **Commit changes**.
+4. Refresh your site after 60 seconds: [https://prajna80-ai.github.io/tribal-roadies/](https://prajna80-ai.github.io/tribal-roadies/)
