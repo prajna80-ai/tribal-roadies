@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Tribal Roadies - Multi-Car Trip Navigation & Live Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tribal Roadies - Multi-Car Trip Navigation</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -17,7 +17,6 @@
                             500: '#f97316',
                             600: '#ea580c',
                             700: '#c2410c',
-                            900: '#7c2d12',
                         }
                     }
                 }
@@ -25,8 +24,8 @@
         }
     </script>
     <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-    <script id="leaflet-script" src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQXchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
@@ -35,38 +34,69 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            font-family: system-ui, -apple-system, sans-serif;
         }
-        #map-container {
+
+        /* Layout Structure Fix for Maps */
+        .app-header {
+            height: 56px;
+        }
+        
+        /* Mobile: Split screen half sidebar, half map */
+        .main-wrapper {
+            height: calc(100vh - 56px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        @media (min-width: 768px) {
+            .main-wrapper {
+                flex-direction: row;
+            }
+        }
+
+        .map-section {
             position: relative;
+            flex: 1 1 50%;
+            min-height: 50vh;
             width: 100%;
-            height: 100%;
-            min-height: 400px;
-            background-color: #cbd5e1;
         }
+
         #map {
             position: absolute;
             top: 0;
-            bottom: 0;
             left: 0;
-            right: 0;
             width: 100% !important;
             height: 100% !important;
             z-index: 1;
+            background: #e2e8f0;
         }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
+
+        .sidebar-section {
+            flex: 1 1 50%;
+            overflow-y: auto;
+            z-index: 10;
+            background: #ffffff;
         }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.4);
-            border-radius: 9999px;
+
+        @media (min-width: 768px) {
+            .sidebar-section {
+                width: 380px;
+                flex: 0 0 380px;
+                height: 100%;
+            }
+            .map-section {
+                height: 100%;
+            }
         }
+
         .car-marker-icon {
             display: flex;
             align-items: center;
             justify-content: center;
             border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            border: 2px solid white;
         }
         .hazard-pulse {
             animation: pulse-danger 1s infinite alternate;
@@ -75,135 +105,121 @@
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.8); }
             100% { box-shadow: 0 0 0 16px rgba(239, 68, 68, 0); }
         }
-        .pb-safe {
-            padding-bottom: max(1rem, env(safe-area-inset-bottom));
-        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans antialiased h-screen flex flex-col overflow-hidden select-none">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100">
 
-    <!-- Top Mobile Header Bar -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-2.5 flex items-center justify-between z-20 shadow-sm shrink-0">
-        <div class="flex items-center space-x-2.5">
-            <div class="bg-brand-600 text-white w-9 h-9 rounded-xl flex items-center justify-center shadow-md shrink-0">
-                <i class="fa-solid fa-compass text-lg"></i>
+    <!-- Header -->
+    <header class="app-header bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between shadow-xs">
+        <div class="flex items-center space-x-2">
+            <div class="bg-brand-600 text-white w-8 h-8 rounded-xl flex items-center justify-center font-bold">
+                <i class="fa-solid fa-compass text-sm"></i>
             </div>
             <div>
-                <h1 class="font-bold text-base leading-tight tracking-wide text-gray-900 dark:text-white flex items-center gap-1.5">
-                    Tribal Roadies <span class="bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-brand-500/20">Live Sync</span>
+                <h1 class="font-bold text-sm leading-tight text-gray-900 dark:text-white">
+                    Tribal Roadies <span class="bg-brand-500/10 text-brand-600 text-[10px] px-1.5 py-0.5 rounded-full font-semibold">Live</span>
                 </h1>
-                <p id="headerDestName" class="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[170px] xs:max-w-[220px]">Destination: Tap map to set</p>
+                <p id="headerDestName" class="text-[10px] text-gray-500 truncate max-w-[180px]">Destination: Tap map to set</p>
             </div>
         </div>
 
         <div class="flex items-center space-x-2">
-            <button onclick="triggerNativeShare()" class="bg-brand-600 active:bg-brand-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition" title="Share Convoy">
+            <button onclick="triggerNativeShare()" class="bg-brand-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow-xs">
                 <i class="fa-solid fa-share-nodes text-xs"></i> <span>Share</span>
             </button>
-            <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center transition">
-                <i class="fa-solid fa-moon dark:hidden text-sm"></i>
-                <i class="fa-solid fa-sun hidden dark:block text-amber-400 text-sm"></i>
+            <button onclick="toggleDarkMode()" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center">
+                <i class="fa-solid fa-moon dark:hidden text-xs"></i>
+                <i class="fa-solid fa-sun hidden dark:block text-amber-400 text-xs"></i>
             </button>
         </div>
     </header>
 
-    <!-- Main Mobile Layout Container -->
-    <div class="flex-1 relative flex flex-col md:flex-row overflow-hidden">
+    <!-- Main Viewport Split -->
+    <div class="main-wrapper">
 
-        <!-- Mobile Drawer Side/Bottom Panel -->
-        <aside id="sidebar" class="w-full md:w-96 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col z-10 transition-all duration-300 order-2 md:order-1 h-1/2 md:h-full">
-            
-            <!-- Mobile Touch Tabs Navigation -->
-            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/90 shrink-0">
-                <button onclick="switchTab('fleet')" id="tab-fleet" class="flex-1 py-3 text-xs font-bold text-brand-600 border-b-2 border-brand-600 flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-car text-sm"></i> Vehicles (<span id="carCountText">2</span>)
+        <!-- Sidebar Panel -->
+        <aside class="sidebar-section border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0">
+                <button onclick="switchTab('fleet')" id="tab-fleet" class="flex-1 py-2.5 text-xs font-bold text-brand-600 border-b-2 border-brand-600 flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-car text-xs"></i> Roadies (<span id="carCountText">2</span>)
                 </button>
-                <button onclick="switchTab('route')" id="tab-route" class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 border-b-2 border-transparent flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-map-location-dot text-sm"></i> Destination
+                <button onclick="switchTab('route')" id="tab-route" class="flex-1 py-2.5 text-xs font-bold text-gray-500 border-b-2 border-transparent flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-map-location-dot text-xs"></i> Destination
                 </button>
-                <button onclick="switchTab('convoy')" id="tab-convoy" class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 border-b-2 border-transparent flex items-center justify-center gap-1.5">
-                    <i class="fa-solid fa-tower-broadcast text-sm"></i> Live Stats
+                <button onclick="switchTab('convoy')" id="tab-convoy" class="flex-1 py-2.5 text-xs font-bold text-gray-500 border-b-2 border-transparent flex items-center justify-center gap-1">
+                    <i class="fa-solid fa-tower-broadcast text-xs"></i> Live Stats
                 </button>
             </div>
 
-            <!-- Scrollable Content Panels -->
-            <div class="flex-1 overflow-y-auto custom-scrollbar p-3.5 space-y-3.5">
+            <!-- Content -->
+            <div class="p-3 space-y-3 overflow-y-auto">
                 
-                <!-- TAB 1: FLEET & CAR MANAGEMENT -->
+                <!-- TAB 1: VEHICLES -->
                 <div id="panel-fleet" class="space-y-3">
-                    <div class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-3 space-y-2">
+                    <div class="bg-brand-500/10 border border-brand-500/20 rounded-xl p-2.5 space-y-1.5">
                         <div class="flex items-center justify-between text-xs font-bold text-brand-700 dark:text-brand-400">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button"></i> Your Phone Role:</span>
-                            <span id="activeDeviceLabel" class="bg-brand-600 text-white px-2 py-0.5 rounded-md text-[10px]">Car 1</span>
+                            <span><i class="fa-solid fa-mobile-screen-button"></i> Your Phone Role:</span>
+                            <span id="activeDeviceLabel" class="bg-brand-600 text-white px-2 py-0.5 rounded text-[10px]">Car 1</span>
                         </div>
-                        <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-tight">
-                            Select which vehicle this phone represents, then tap <strong>"Sync My Location"</strong> to set your real GPS coordinates.
-                        </p>
-                        <div class="grid grid-cols-2 gap-2 pt-1">
-                            <button onclick="selectDeviceCar('car-1')" id="btn-device-car-1" class="py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs">
-                                <i class="fa-solid fa-car text-xs mr-1"></i> I'm in Car 1
-                            </button>
-                            <button onclick="selectDeviceCar('car-2')" id="btn-device-car-2" class="py-2 px-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">
-                                <i class="fa-solid fa-car text-xs mr-1"></i> I'm in Car 2
-                            </button>
+                        <div class="grid grid-cols-2 gap-1.5 pt-1">
+                            <button onclick="selectDeviceCar('car-1')" id="btn-device-car-1" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-brand-600 text-white">Car 1</button>
+                            <button onclick="selectDeviceCar('car-2')" id="btn-device-car-2" class="py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200">Car 2</button>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Convoy Vehicles</h3>
-                        <div class="flex items-center gap-1.5">
-                            <button onclick="syncAssignedCarGPS()" class="text-xs bg-emerald-600 text-white active:bg-emerald-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 shadow-sm">
-                                <i class="fa-solid fa-location-crosshairs text-xs"></i> Sync My Location
+                        <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider">Convoy Vehicles</h3>
+                        <div class="flex items-center gap-1">
+                            <button onclick="syncAssignedCarGPS()" class="text-xs bg-emerald-600 text-white px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 shadow-xs">
+                                <i class="fa-solid fa-location-crosshairs text-xs"></i> Sync GPS
                             </button>
-                            <button onclick="openAddCarModal()" class="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 active:bg-brand-500/20 px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
-                                <i class="fa-solid fa-plus text-xs"></i> Add Car
+                            <button onclick="openAddCarModal()" class="text-xs bg-brand-500/10 text-brand-600 px-2 py-1 rounded-lg font-bold">
+                                + Add
                             </button>
                         </div>
                     </div>
 
-                    <div id="fleetList" class="space-y-3"></div>
+                    <div id="fleetList" class="space-y-2.5"></div>
                 </div>
 
                 <!-- TAB 2: ROUTE SETUP -->
                 <div id="panel-route" class="hidden space-y-3">
                     <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Common Trip Destination</label>
+                        <label class="block text-xs font-bold uppercase text-gray-500">Trip Destination</label>
                         <div class="relative">
-                            <input type="text" id="destInput" value="" placeholder="Type city, landmark or address..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 pl-9 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
-                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
+                            <input type="text" id="destInput" value="" placeholder="Type city, landmark or address..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                         </div>
-                        <button onclick="updateDestinationFromInput()" class="w-full bg-brand-600 active:bg-brand-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow">
+                        <button onclick="updateDestinationFromInput()" class="w-full bg-brand-600 text-white text-xs font-bold py-2 rounded-lg">
                             Search & Set Destination
                         </button>
                     </div>
 
-                    <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 p-2.5 rounded-xl text-[11px] text-orange-700 dark:text-orange-300">
-                        <i class="fa-solid fa-hand-pointer mr-1"></i> You can also tap anywhere directly on the map screen to place your destination pin!
+                    <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-2.5 rounded-lg text-[11px] text-amber-700 dark:text-amber-300">
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> Or tap anywhere directly on the map screen to set your destination!
                     </div>
                 </div>
 
-                <!-- TAB 3: CONVOY LIVE STATS & ALERTS -->
+                <!-- TAB 3: STATS & ALERTS -->
                 <div id="panel-convoy" class="hidden space-y-3">
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Distance Between Cars</span>
-                            <span id="statConvoyGap" class="text-base font-bold text-gray-800 dark:text-gray-100">-- mi</span>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg border border-gray-200">
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Car Distance</span>
+                            <span id="statConvoyGap" class="text-sm font-bold">-- mi</span>
                         </div>
-                        <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Active Vehicles</span>
-                            <span id="statCarCount" class="text-base font-bold text-gray-800 dark:text-gray-100">2 Vehicles</span>
+                        <div class="bg-gray-50 dark:bg-gray-700/50 p-2 rounded-lg border border-gray-200">
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Total Vehicles</span>
+                            <span id="statCarCount" class="text-sm font-bold">2</span>
                         </div>
                     </div>
 
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-2.5">
-                        <h4 class="text-xs font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Emergency Alert to Convoy
-                        </h4>
+                    <div class="border-t border-gray-200 pt-2">
+                        <h4 class="text-xs font-bold text-red-500 uppercase tracking-wider mb-2">Emergency Alerts</h4>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="triggerFleetAlert('Pit Stop Needed')" class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-2 rounded-xl text-xs font-bold active:bg-amber-500/20 text-left">
-                                <i class="fa-solid fa-gas-pump mr-1"></i> Pit Stop Needed
+                            <button onclick="triggerFleetAlert('Pit Stop Needed')" class="bg-amber-500/10 border border-amber-500/30 text-amber-600 p-2 rounded-lg text-xs font-bold text-left">
+                                <i class="fa-solid fa-gas-pump mr-1"></i> Gas Stop
                             </button>
-                            <button onclick="triggerFleetAlert('Vehicle Pulled Over')" class="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 p-2 rounded-xl text-xs font-bold active:bg-red-500/20 text-left">
+                            <button onclick="triggerFleetAlert('Vehicle Pulled Over')" class="bg-red-500/10 border border-red-500/30 text-red-600 p-2 rounded-lg text-xs font-bold text-left">
                                 <i class="fa-solid fa-car-burst mr-1"></i> Pulled Over
                             </button>
                         </div>
@@ -213,81 +229,74 @@
             </div>
         </aside>
 
-        <!-- Interactive Map Viewport -->
-        <main class="flex-1 relative order-1 md:order-2 h-1/2 md:h-full min-h-[400px]">
-            <div id="map-container">
-                <div id="map"></div>
-            </div>
+        <!-- Map Section -->
+        <main class="map-section">
+            <div id="map"></div>
 
             <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
-                <button onclick="recenterMap()" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-10 h-10 rounded-2xl shadow-xl flex items-center justify-center active:bg-gray-100 dark:active:bg-gray-700 transition" title="Center Fleet View">
-                    <i class="fa-solid fa-crosshairs text-base"></i>
+                <button onclick="recenterMap()" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-9 h-9 rounded-xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-crosshairs text-sm"></i>
                 </button>
-                <button onclick="syncAssignedCarGPS()" class="bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 w-10 h-10 rounded-2xl shadow-xl flex items-center justify-center active:bg-gray-100 dark:active:bg-gray-700 transition" title="Sync My Location">
-                    <i class="fa-solid fa-location-arrow text-base"></i>
+                <button onclick="syncAssignedCarGPS()" class="bg-white dark:bg-gray-800 text-emerald-600 w-9 h-9 rounded-xl shadow-md flex items-center justify-center">
+                    <i class="fa-solid fa-location-arrow text-sm"></i>
                 </button>
             </div>
 
-            <div id="alertBanner" class="hidden absolute top-3 left-3 right-3 z-[1000] bg-red-600 text-white px-3.5 py-2.5 rounded-2xl shadow-2xl flex items-center justify-between text-xs font-semibold animate-bounce">
+            <div id="alertBanner" class="hidden absolute top-3 left-3 right-3 z-[1000] bg-red-600 text-white px-3 py-2 rounded-xl shadow-lg flex items-center justify-between text-xs font-semibold animate-bounce">
                 <div class="flex items-center space-x-2 truncate">
-                    <i class="fa-solid fa-triangle-exclamation text-base shrink-0"></i>
-                    <span id="alertMessageText" class="truncate">Hazard reported!</span>
+                    <i class="fa-solid fa-triangle-exclamation text-sm shrink-0"></i>
+                    <span id="alertMessageText" class="truncate">Alert broadcasted</span>
                 </div>
-                <button onclick="dismissAlert()" class="ml-2 bg-red-800 active:bg-red-900 px-2.5 py-1 rounded-xl text-[10px] shrink-0 font-bold">Dismiss</button>
+                <button onclick="dismissAlert()" class="ml-2 bg-red-800 px-2 py-0.5 rounded text-[10px] shrink-0 font-bold">Dismiss</button>
             </div>
         </main>
     </div>
 
     <!-- EDIT / ADD CAR MODAL -->
-    <div id="addCarModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4 pb-safe">
-            <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
-                <h3 id="modalTitle" class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-car-side text-brand-600"></i> Edit Vehicle Details
-                </h3>
-                <button onclick="closeAddCarModal()" class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div id="addCarModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-[2000] flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-3">
+            <div class="flex items-center justify-between border-b pb-2">
+                <h3 id="modalTitle" class="text-xs font-bold text-gray-900 dark:text-white">Vehicle Details</h3>
+                <button onclick="closeAddCarModal()" class="text-gray-400"><i class="fa-solid fa-xmark text-base"></i></button>
             </div>
 
-            <form id="addCarForm" onsubmit="handleSaveCar(event)" class="space-y-3">
+            <form id="addCarForm" onsubmit="handleSaveCar(event)" class="space-y-2.5">
                 <input type="hidden" id="editingCarId" value="">
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Vehicle Name / Model</label>
-                    <input type="text" id="carName" required placeholder="e.g. Car 1 - White Fortuner" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                    <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Vehicle Label</label>
+                    <input type="text" id="carName" required placeholder="e.g. Car 1" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Driver Name</label>
-                    <input type="text" id="driverName" required placeholder="e.g. John Doe" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                    <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Driver Name</label>
+                    <input type="text" id="driverName" required placeholder="e.g. Alex" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Phone Number 1</label>
-                        <input type="tel" id="phone1" required placeholder="+1 555-0192" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Phone #1</label>
+                        <input type="tel" id="phone1" required placeholder="+1..." class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Phone Number 2 (Optional)</label>
-                        <input type="tel" id="phone2" placeholder="+1 555-0144" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Phone #2</label>
+                        <input type="tel" id="phone2" placeholder="+1..." class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Marker Color</label>
-                    <div class="flex items-center gap-3">
-                        <input type="color" id="carColor" value="#ea580c" class="h-10 w-16 rounded-xl cursor-pointer bg-transparent border-0">
-                        <span class="text-xs text-gray-500">Map Icon Color</span>
-                    </div>
+                    <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Color</label>
+                    <input type="color" id="carColor" value="#ea580c" class="h-8 w-12 rounded cursor-pointer bg-transparent border-0">
                 </div>
 
                 <div class="pt-2 flex gap-2 justify-end">
-                    <button type="button" onclick="closeAddCarModal()" class="px-4 py-2.5 text-xs font-semibold text-gray-500">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 text-xs font-bold bg-brand-600 active:bg-brand-700 text-white rounded-xl shadow">Save Vehicle</button>
+                    <button type="button" onclick="closeAddCarModal()" class="px-3 py-1.5 text-xs font-semibold text-gray-500">Cancel</button>
+                    <button type="submit" class="px-4 py-1.5 text-xs font-bold bg-brand-600 text-white rounded-lg">Save</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- JavaScript Application Core Logic -->
+    <!-- Application Script -->
     <script>
         let map = null;
         let destMarker = null;
@@ -296,7 +305,7 @@
         let destination = {
             lat: null,
             lng: null,
-            name: "Not Set (Tap map or search)"
+            name: "Not Set"
         };
 
         let cars = [
@@ -335,12 +344,12 @@
             const label = document.getElementById('activeDeviceLabel');
 
             if (carId === 'car-1') {
-                car1Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs';
-                car2Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
+                car1Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-brand-600 text-white';
+                car2Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
                 label.innerText = 'Car 1';
             } else {
-                car2Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs';
-                car1Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
+                car2Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-brand-600 text-white';
+                car1Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
                 label.innerText = 'Car 2';
             }
         }
@@ -349,70 +358,53 @@
             useCurrentLocationForCar(activeDeviceCarId);
         }
 
-        window.addEventListener('load', () => {
+        // Initialize Map
+        window.onload = function() {
             renderFleetList();
             updateStats();
-
-            if (typeof L !== 'undefined') {
-                initMap();
-            } else {
-                const leafletScript = document.getElementById('leaflet-script');
-                if (leafletScript) {
-                    leafletScript.addEventListener('load', () => {
-                        initMap();
-                    });
-                }
-            }
-        });
+            initMap();
+        };
 
         function initMap() {
             if (typeof L === 'undefined') {
-                setTimeout(initMap, 300);
+                setTimeout(initMap, 200);
                 return;
             }
 
             try {
+                // Initialize map with default coordinates (India center default fallback)
                 map = L.map('map', { 
                     zoomControl: false,
                     attributionControl: false 
                 }).setView([20.5937, 78.9629], 5);
 
-                const tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                // Use reliable OpenStreetMap HTTPS CDN tile layer
+                L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    subdomains: 'abcd',
                     crossOrigin: true
-                });
-
-                tileLayer.on('tileerror', function(error, tile) {
-                    console.warn('Primary tile failed, loading Esri fallback...');
-                    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}').addTo(map);
-                });
-
-                tileLayer.addTo(map);
+                }).addTo(map);
 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
                 map.on('click', (e) => {
-                    setPresetDest(e.latlng.lat, e.latlng.lng, `Destination (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
+                    setPresetDest(e.latlng.lat, e.latlng.lng, `Location (${e.latlng.lat.toFixed(3)}, ${e.latlng.lng.toFixed(3)})`);
                 });
 
+                // Multiple size recalculation pulses to ensure map renders after flex layout calculation
                 map.invalidateSize();
-                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
-                setTimeout(() => { if (map) map.invalidateSize(); }, 600);
-                setTimeout(() => { if (map) map.invalidateSize(); }, 1200);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 1000);
 
             } catch (err) {
-                console.error("Leaflet initialization error:", err);
+                console.error("Map loading error:", err);
             }
         }
 
         function createCarIconHtml(car) {
             const hazardClass = car.status === 'hazard' ? 'hazard-pulse' : '';
-            const label = car.name.substring(0, 5);
             return `
-                <div class="car-marker-icon ${hazardClass} flex flex-col items-center justify-center text-white font-bold text-[10px]" style="background-color: ${car.color}; width: 36px; height: 36px;">
-                    <i class="fa-solid fa-car text-xs"></i>
-                    <span class="text-[8px] leading-none uppercase font-black">${label}</span>
+                <div class="car-marker-icon ${hazardClass} font-bold text-[9px] text-white" style="background-color: ${car.color}; width: 32px; height: 32px;">
+                    <i class="fa-solid fa-car"></i>
                 </div>
             `;
         }
@@ -423,8 +415,8 @@
             const customIcon = L.divIcon({
                 className: '',
                 html: createCarIconHtml(car),
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
+                iconSize: [32, 32],
+                iconAnchor: [16, 16]
             });
 
             if (car.marker) map.removeLayer(car.marker);
@@ -450,9 +442,9 @@
                     [destination.lat, destination.lng]
                 ], {
                     color: car.color,
-                    weight: 4,
-                    dashArray: '6, 8',
-                    opacity: 0.85
+                    weight: 3,
+                    dashArray: '5, 5',
+                    opacity: 0.8
                 }).addTo(map);
             }
         }
@@ -472,7 +464,7 @@
                     if (car) {
                         car.currentLat = lat;
                         car.currentLng = lng;
-                        car.status = "Location Active";
+                        car.status = "Active GPS";
 
                         if (map) {
                             updateCarMapElements(car);
@@ -500,13 +492,13 @@
 
             const destIcon = L.divIcon({
                 className: '',
-                html: `<div class="bg-red-600 text-white p-2 rounded-full shadow-lg flex items-center justify-center w-9 h-9 border-2 border-white"><i class="fa-solid fa-location-dot text-base"></i></div>`,
-                iconSize: [36, 36],
-                iconAnchor: [18, 36]
+                html: `<div class="bg-red-600 text-white p-1.5 rounded-full shadow-lg flex items-center justify-center w-8 h-8 border-2 border-white"><i class="fa-solid fa-location-dot text-sm"></i></div>`,
+                iconSize: [32, 32],
+                iconAnchor: [16, 32]
             });
 
             destMarker = L.marker([destination.lat, destination.lng], { icon: destIcon }).addTo(map);
-            destMarker.bindPopup(`<b>${destination.name}</b><br/>Tribal Roadies Destination`).openPopup();
+            destMarker.bindPopup(`<b>${destination.name}</b>`).openPopup();
         }
 
         async function updateDestinationFromInput() {
@@ -520,10 +512,10 @@
                     const place = results[0];
                     setPresetDest(parseFloat(place.lat), parseFloat(place.lon), place.display_name.split(',')[0]);
                 } else {
-                    alert('Destination place not found. Try tapping directly on the map!');
+                    alert('Location not found. Try tapping directly on the map screen!');
                 }
             } catch (e) {
-                alert('Could not reach search service. Please tap directly on the map to set destination.');
+                alert('Tap directly on the map screen to set destination.');
             }
         }
 
@@ -544,12 +536,10 @@
 
             document.getElementById('editingCarId').value = car.id;
             document.getElementById('carName').value = car.name;
-            document.getElementById('driverName').value = car.driver === 'Driver 1' || car.driver === 'Driver 2' ? '' : car.driver;
+            document.getElementById('driverName').value = car.driver.includes('Driver') ? '' : car.driver;
             document.getElementById('phone1').value = car.phone1;
             document.getElementById('phone2').value = car.phone2;
             document.getElementById('carColor').value = car.color;
-
-            document.getElementById('modalTitle').innerText = `Edit ${car.name} Details`;
             document.getElementById('addCarModal').classList.remove('hidden');
         }
 
@@ -559,7 +549,6 @@
             document.getElementById('driverName').value = "";
             document.getElementById('phone1').value = "";
             document.getElementById('phone2').value = "";
-            document.getElementById('modalTitle').innerText = "Add Vehicle Details";
             document.getElementById('addCarModal').classList.remove('hidden');
         }
 
@@ -624,19 +613,17 @@
                 }
             });
 
-            if (map) {
-                setTimeout(() => map.invalidateSize(), 150);
-            }
+            if (map) setTimeout(() => map.invalidateSize(), 100);
         }
 
         function openGoogleMapsRoute(carId) {
             const car = cars.find(c => c.id === carId);
             if (!car || !car.currentLat) {
-                alert('Please tap "Sync My Location" on this car first to get its GPS coordinates.');
+                alert('Tap "Sync GPS" on this car first to get its coordinates.');
                 return;
             }
             if (!destination.lat) {
-                alert('Please set a destination first on the map or Destination tab.');
+                alert('Set a destination first on the map screen.');
                 return;
             }
             const url = `https://www.google.com/maps/dir/?api=1&origin=${car.currentLat},${car.currentLng}&destination=${destination.lat},${destination.lng}&travelmode=driving`;
@@ -644,17 +631,15 @@
         }
 
         async function triggerNativeShare() {
-            const carListSummary = cars.map(c => `${c.name} (${c.driver}): ${c.phone1 || 'No Phone'}`).join('\n');
+            const carListSummary = cars.map(c => `${c.name}: ${c.phone1 || 'No Phone'}`).join('\n');
             const shareData = {
-                title: 'Tribal Roadies Trip Invite',
-                text: `Join our road trip to ${destination.name}!\nRoadies Roster:\n${carListSummary}`,
+                title: 'Tribal Roadies Trip',
+                text: `Road trip to ${destination.name}!\nCars:\n${carListSummary}`,
                 url: window.location.href
             };
 
             if (navigator.share) {
-                try {
-                    await navigator.share(shareData);
-                } catch (err) {}
+                try { await navigator.share(shareData); } catch (err) {}
             } else {
                 navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
                 alert('Trip details copied to clipboard!');
@@ -671,39 +656,37 @@
                     : "Not calculated";
 
                 return `
-                    <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 space-y-2 text-xs shadow-sm">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 space-y-1.5 text-xs shadow-2xs">
                         <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-2">
-                                <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: ${car.color}"></span>
-                                <h4 class="font-bold text-gray-800 dark:text-gray-100 truncate max-w-[150px]">${car.name}</h4>
+                            <div class="flex items-center space-x-1.5">
+                                <span class="w-3 h-3 rounded-full shrink-0" style="background-color: ${car.color}"></span>
+                                <h4 class="font-bold text-gray-800 dark:text-gray-100">${car.name}</h4>
                             </div>
-                            <button onclick="openEditCarModal('${car.id}')" class="text-xs text-brand-600 dark:text-brand-400 font-bold active:underline flex items-center gap-1">
-                                <i class="fa-solid fa-pen-to-square text-xs"></i> Edit Info
-                            </button>
+                            <button onclick="openEditCarModal('${car.id}')" class="text-[11px] text-brand-600 font-bold active:underline">Edit</button>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-1 text-[11px] text-gray-500 dark:text-gray-400">
+                        <div class="grid grid-cols-2 gap-1 text-[10px] text-gray-500">
                             <div>Driver: <strong class="text-gray-700 dark:text-gray-200">${car.driver}</strong></div>
-                            <div>Dist left: <strong class="text-gray-700 dark:text-gray-200">${distLeft}</strong></div>
+                            <div>Dist: <strong class="text-gray-700 dark:text-gray-200">${distLeft}</strong></div>
                         </div>
 
-                        <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-gray-200/70 dark:border-gray-600/70">
+                        <div class="grid grid-cols-3 gap-1 pt-1 border-t border-gray-200/60">
                             ${car.phone1 ? `
-                            <a href="tel:${car.phone1}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P1 Call
+                            <a href="tel:${car.phone1}" class="bg-white dark:bg-gray-600 border text-gray-700 dark:text-gray-200 py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P1
                             </a>` : `
-                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[10px] text-center font-medium">+ Add P1</button>
+                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 text-gray-400 py-1 rounded text-[10px]">+ P1</button>
                             `}
 
                             ${car.phone2 ? `
-                            <a href="tel:${car.phone2}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P2 Call
+                            <a href="tel:${car.phone2}" class="bg-white dark:bg-gray-600 border text-gray-700 dark:text-gray-200 py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P2
                             </a>` : `
-                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[10px] text-center font-medium">+ Add P2</button>
+                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 text-gray-400 py-1 rounded text-[10px]">+ P2</button>
                             `}
 
-                            <button onclick="openGoogleMapsRoute('${car.id}')" class="bg-emerald-600 text-white active:bg-emerald-700 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-map-pin text-white"></i> Maps
+                            <button onclick="openGoogleMapsRoute('${car.id}')" class="bg-emerald-600 text-white py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-map-pin"></i> Maps
                             </button>
                         </div>
                     </div>
@@ -712,7 +695,7 @@
         }
 
         function updateStats() {
-            document.getElementById('statCarCount').innerText = `${cars.length} Vehicles`;
+            document.getElementById('statCarCount').innerText = cars.length;
             if (cars.length >= 2 && cars[0].currentLat && cars[1].currentLat) {
                 const gap = getDistanceInMiles(cars[0].currentLat, cars[0].currentLng, cars[1].currentLat, cars[1].currentLng);
                 document.getElementById('statConvoyGap').innerText = `${gap} mi`;
@@ -736,7 +719,7 @@
 
             const bounds = L.latLngBounds(activeCars.map(c => [c.currentLat, c.currentLng]));
             if (destination.lat) bounds.extend([destination.lat, destination.lng]);
-            map.fitBounds(bounds, { padding: [40, 40] });
+            map.fitBounds(bounds, { padding: [30, 30] });
         }
 
         function setPresetDest(lat, lng, name) {
@@ -769,8 +752,8 @@
 </html>
 ```
 
-### Steps to update on GitHub:
-1. Copy the entire code block above (`index.html`).
-2. Go to your GitHub repository: `https://github.com/prajna80-ai/tribal-roadies/edit/main/index.html`
+### Steps to update GitHub:
+1. Copy the code block above (`index.html`).
+2. Go to your GitHub file edit URL: `https://github.com/prajna80-ai/tribal-roadies/edit/main/index.html`
 3. Replace all existing text and click **Commit changes**.
-4. Refresh your site after 60 seconds: [https://prajna80-ai.github.io/tribal-roadies/](https://prajna80-ai.github.io/tribal-roadies/)
+4. Refresh [https://prajna80-ai.github.io/tribal-roadies/](https://prajna80-ai.github.io/tribal-roadies/)!
