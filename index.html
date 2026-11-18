@@ -30,7 +30,23 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
     <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+        }
         #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
             width: 100%;
             height: 100%;
             z-index: 1;
@@ -76,17 +92,14 @@
                 <h1 class="font-bold text-base leading-tight tracking-wide text-gray-900 dark:text-white flex items-center gap-1.5">
                     Tribal Roadies <span class="bg-brand-500/10 text-brand-600 dark:text-brand-400 text-[10px] px-2 py-0.5 rounded-full font-semibold border border-brand-500/20">Live Sync</span>
                 </h1>
-                <p id="headerDestName" class="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[170px] xs:max-w-[220px]">Destination: Yosemite Valley</p>
+                <p id="headerDestName" class="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[170px] xs:max-w-[220px]">Destination: Tap to set destination</p>
             </div>
         </div>
 
         <!-- Header Quick Action Buttons -->
         <div class="flex items-center space-x-2">
-            <button onclick="toggleSimulation()" id="simPlayBtn" class="bg-emerald-600 active:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition">
-                <i class="fa-solid fa-play text-xs"></i> <span id="simBtnLabel" class="hidden sm:inline">Simulate</span>
-            </button>
-            <button onclick="triggerNativeShare()" class="bg-brand-600 active:bg-brand-700 text-white w-9 h-9 rounded-xl text-xs font-bold flex items-center justify-center shadow-sm transition" title="Share Convoy">
-                <i class="fa-solid fa-share-nodes text-sm"></i>
+            <button onclick="triggerNativeShare()" class="bg-brand-600 active:bg-brand-700 text-white px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1 shadow-sm transition" title="Share Convoy">
+                <i class="fa-solid fa-share-nodes text-xs"></i> <span>Share</span>
             </button>
             <button onclick="toggleDarkMode()" class="w-9 h-9 rounded-xl bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 flex items-center justify-center transition">
                 <i class="fa-solid fa-moon dark:hidden text-sm"></i>
@@ -104,10 +117,10 @@
             <!-- Mobile Touch Tabs Navigation -->
             <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/90 shrink-0">
                 <button onclick="switchTab('fleet')" id="tab-fleet" class="flex-1 py-3 text-xs font-bold text-brand-600 border-b-2 border-brand-600 flex items-center justify-center gap-1.5 active:bg-gray-100 dark:active:bg-gray-700">
-                    <i class="fa-solid fa-car text-sm"></i> Roadies (<span id="carCountText">0</span>)
+                    <i class="fa-solid fa-car text-sm"></i> Vehicles (<span id="carCountText">2</span>)
                 </button>
                 <button onclick="switchTab('route')" id="tab-route" class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 border-b-2 border-transparent flex items-center justify-center gap-1.5 active:bg-gray-100 dark:active:bg-gray-700">
-                    <i class="fa-solid fa-map-location-dot text-sm"></i> Route
+                    <i class="fa-solid fa-map-location-dot text-sm"></i> Destination
                 </button>
                 <button onclick="switchTab('convoy')" id="tab-convoy" class="flex-1 py-3 text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-gray-400 border-b-2 border-transparent flex items-center justify-center gap-1.5 active:bg-gray-100 dark:active:bg-gray-700">
                     <i class="fa-solid fa-tower-broadcast text-sm"></i> Live Stats
@@ -122,11 +135,11 @@
                     <!-- Phone Assignment Selector Banner for Testing -->
                     <div class="bg-brand-500/10 border border-brand-500/20 rounded-2xl p-3 space-y-2">
                         <div class="flex items-center justify-between text-xs font-bold text-brand-700 dark:text-brand-400">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button"></i> Active Phone Assignment:</span>
-                            <span id="activeDeviceLabel" class="bg-brand-600 text-white px-2 py-0.5 rounded-md text-[10px]">Car 1 Phone</span>
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-mobile-screen-button"></i> Your Phone Role:</span>
+                            <span id="activeDeviceLabel" class="bg-brand-600 text-white px-2 py-0.5 rounded-md text-[10px]">Car 1</span>
                         </div>
                         <p class="text-[11px] text-gray-600 dark:text-gray-300 leading-tight">
-                            Assign this phone to Car 1 or Car 2, then tap <strong>"Sync My Phone GPS"</strong> to stream your phone's location live!
+                            Select which vehicle this phone represents, then tap <strong>"Sync My Location"</strong> to set your real GPS coordinates.
                         </p>
                         <div class="grid grid-cols-2 gap-2 pt-1">
                             <button onclick="selectDeviceCar('car-1')" id="btn-device-car-1" class="py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs">
@@ -139,12 +152,12 @@
                     </div>
 
                     <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Convoy Cars</h3>
+                        <h3 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Convoy Vehicles</h3>
                         <div class="flex items-center gap-1.5">
                             <button onclick="syncAssignedCarGPS()" class="text-xs bg-emerald-600 text-white active:bg-emerald-700 px-3 py-1.5 rounded-xl font-bold transition flex items-center gap-1 shadow-sm">
-                                <i class="fa-solid fa-location-crosshairs text-xs"></i> Sync My Phone GPS
+                                <i class="fa-solid fa-location-crosshairs text-xs"></i> Sync My Location
                             </button>
-                            <button onclick="openAddCarModal()" class="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 active:bg-brand-500/20 px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
+                            <button onclick="openAddCarModal()" class="text-xs bg-brand-500/10 text-brand-600 dark:text-brand-400 active:bg-brand-500/20 px-2.5 py-1.5 rounded-lg font-bold transition flex items-center gap-1">
                                 <i class="fa-solid fa-plus text-xs"></i> Add Car
                             </button>
                         </div>
@@ -159,37 +172,18 @@
                 <!-- TAB 2: ROUTE SETUP -->
                 <div id="panel-route" class="hidden space-y-3">
                     <div class="space-y-2">
-                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Target Destination</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-400">Common Trip Destination</label>
                         <div class="relative">
-                            <input type="text" id="destInput" value="Yosemite Valley, CA" placeholder="Type destination or click on map..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 pl-9 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <input type="text" id="destInput" value="" placeholder="Type city, landmark or address..." class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 pl-9 text-xs text-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
                             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-gray-400 text-xs"></i>
                         </div>
-                        <div class="flex gap-2">
-                            <button onclick="updateDestinationFromInput()" class="flex-1 bg-brand-600 active:bg-brand-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow">
-                                Search & Set Destination
-                            </button>
-                            <button onclick="enableMapPickDestination()" id="mapPickBtn" class="bg-gray-200 dark:bg-gray-700 active:bg-gray-300 text-gray-700 dark:text-gray-200 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1">
-                                <i class="fa-solid fa-hand-pointer text-xs"></i> Pick on Map
-                            </button>
-                        </div>
+                        <button onclick="updateDestinationFromInput()" class="w-full bg-brand-600 active:bg-brand-700 text-white text-xs font-bold py-2.5 rounded-xl transition shadow">
+                            Search & Set Destination
+                        </button>
                     </div>
 
                     <div class="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800/40 p-2.5 rounded-xl text-[11px] text-orange-700 dark:text-orange-300">
-                        <i class="fa-solid fa-circle-info mr-1"></i> You can also tap anywhere directly on the map to place the destination pin!
-                    </div>
-
-                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                        <h4 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Mobile Presets</h4>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="setPresetDest(37.7749, -122.4194, 'San Francisco Ferry Building')" class="text-left p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 active:border-brand-500 text-xs bg-gray-50 dark:bg-gray-700/50">
-                                <span class="font-bold block text-xs">San Francisco</span>
-                                <span class="text-gray-400 text-[10px]">Bay Area Hub</span>
-                            </button>
-                            <button onclick="setPresetDest(37.7397, -119.5730, 'Yosemite National Park')" class="text-left p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 active:border-brand-500 text-xs bg-gray-50 dark:bg-gray-700/50">
-                                <span class="font-bold block text-xs">Yosemite</span>
-                                <span class="text-gray-400 text-[10px]">National Park</span>
-                            </button>
-                        </div>
+                        <i class="fa-solid fa-hand-pointer mr-1"></i> You can also tap anywhere directly on the map screen to place your destination pin!
                     </div>
                 </div>
 
@@ -198,36 +192,26 @@
                     <!-- Convoy Summary Cards -->
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Convoy Gap</span>
-                            <span id="statConvoyGap" class="text-base font-bold text-gray-800 dark:text-gray-100">1.2 mi</span>
-                            <span class="text-[10px] text-emerald-500 flex items-center gap-0.5 mt-0.5"><i class="fa-solid fa-check"></i> Safe</span>
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Distance Between Cars</span>
+                            <span id="statConvoyGap" class="text-base font-bold text-gray-800 dark:text-gray-100">-- mi</span>
                         </div>
                         <div class="bg-gray-50 dark:bg-gray-700/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
-                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Avg Fleet Speed</span>
-                            <span id="statAvgSpeed" class="text-base font-bold text-gray-800 dark:text-gray-100">62 mph</span>
-                            <span class="text-[10px] text-gray-400 block mt-0.5">Cruising</span>
-                        </div>
-                    </div>
-
-                    <!-- Live Progress by Car -->
-                    <div class="space-y-2.5">
-                        <h4 class="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase tracking-wider">Tribal Progress</h4>
-                        <div id="progressList" class="space-y-2">
-                            <!-- Dynamic progress bars -->
+                            <span class="text-[10px] uppercase font-bold text-gray-400 block">Active Vehicles</span>
+                            <span id="statCarCount" class="text-base font-bold text-gray-800 dark:text-gray-100">2 Vehicles</span>
                         </div>
                     </div>
 
                     <!-- Quick Convoy Alert Trigger -->
                     <div class="border-t border-gray-200 dark:border-gray-700 pt-2.5">
                         <h4 class="text-xs font-bold text-red-500 dark:text-red-400 uppercase tracking-wider mb-2 flex items-center gap-1">
-                            <i class="fa-solid fa-triangle-exclamation"></i> Emergency Broadcast
+                            <i class="fa-solid fa-triangle-exclamation"></i> Emergency Alert to Convoy
                         </h4>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="triggerFleetAlert('Pit Stop / Gas Needed')" class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-2 rounded-xl text-xs font-bold active:bg-amber-500/20 text-left">
-                                <i class="fa-solid fa-gas-pump mr-1"></i> Gas Stop
+                            <button onclick="triggerFleetAlert('Pit Stop Needed')" class="bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 p-2 rounded-xl text-xs font-bold active:bg-amber-500/20 text-left">
+                                <i class="fa-solid fa-gas-pump mr-1"></i> Pit Stop Needed
                             </button>
-                            <button onclick="triggerFleetAlert('Vehicle Hazard / Pulled Over')" class="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 p-2 rounded-xl text-xs font-bold active:bg-red-500/20 text-left">
-                                <i class="fa-solid fa-car-burst mr-1"></i> Hazard Alert
+                            <button onclick="triggerFleetAlert('Vehicle Pulled Over')" class="bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 p-2 rounded-xl text-xs font-bold active:bg-red-500/20 text-left">
+                                <i class="fa-solid fa-car-burst mr-1"></i> Pulled Over
                             </button>
                         </div>
                     </div>
@@ -237,15 +221,17 @@
         </aside>
 
         <!-- Interactive Map Viewport -->
-        <main class="flex-1 relative order-1 md:order-2 h-1/2 md:h-full">
-            <div id="map"></div>
+        <main class="flex-1 relative order-1 md:order-2 h-1/2 md:h-full min-h-[300px]">
+            <div id="map-container">
+                <div id="map"></div>
+            </div>
 
             <!-- Map Mobile Quick Controls -->
             <div class="absolute top-3 right-3 z-[1000] flex flex-col gap-2">
                 <button onclick="recenterMap()" class="bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 w-10 h-10 rounded-2xl shadow-xl flex items-center justify-center active:bg-gray-100 dark:active:bg-gray-700 transition" title="Center Fleet View">
                     <i class="fa-solid fa-crosshairs text-base"></i>
                 </button>
-                <button onclick="useCurrentLocationForCar('car-1')" class="bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 w-10 h-10 rounded-2xl shadow-xl flex items-center justify-center active:bg-gray-100 dark:active:bg-gray-700 transition" title="Set Car 1 to My Current GPS Location">
+                <button onclick="syncAssignedCarGPS()" class="bg-white dark:bg-gray-800 text-emerald-600 dark:text-emerald-400 w-10 h-10 rounded-2xl shadow-xl flex items-center justify-center active:bg-gray-100 dark:active:bg-gray-700 transition" title="Sync My Location">
                     <i class="fa-solid fa-location-arrow text-base"></i>
                 </button>
             </div>
@@ -261,34 +247,35 @@
         </main>
     </div>
 
-    <!-- ADD CAR MODAL -->
+    <!-- EDIT / ADD CAR MODAL -->
     <div id="addCarModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[2000] flex items-end sm:items-center justify-center p-0 sm:p-4">
         <div class="bg-white dark:bg-gray-800 rounded-t-3xl sm:rounded-2xl max-w-md w-full p-5 shadow-2xl border border-gray-200 dark:border-gray-700 space-y-4 pb-safe">
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-700 pb-3">
-                <h3 class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <i class="fa-solid fa-car-side text-brand-600"></i> Add Roadie Vehicle
+                <h3 id="modalTitle" class="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-car-side text-brand-600"></i> Edit Vehicle Details
                 </h3>
                 <button onclick="closeAddCarModal()" class="text-gray-400 active:text-gray-600 dark:active:text-gray-200 p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
-            <form id="addCarForm" onsubmit="handleAddCar(event)" class="space-y-3">
+            <form id="addCarForm" onsubmit="handleSaveCar(event)" class="space-y-3">
+                <input type="hidden" id="editingCarId" value="">
                 <div>
-                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Vehicle Label</label>
-                    <input type="text" id="carName" required placeholder="e.g. Lead SUV - Blue RAV4" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                    <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Vehicle Name / Model</label>
+                    <input type="text" id="carName" required placeholder="e.g. Car 1 - White Fortuner" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
 
                 <div>
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Driver Name</label>
-                    <input type="text" id="driverName" required placeholder="e.g. Alex Rivera" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
+                    <input type="text" id="driverName" required placeholder="e.g. John Doe" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Driver Phone #1</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Phone Number 1</label>
                         <input type="tel" id="phone1" required placeholder="+1 555-0192" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Pass. Phone #2</label>
+                        <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Phone Number 2 (Optional)</label>
                         <input type="tel" id="phone2" placeholder="+1 555-0144" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2.5 text-xs text-gray-800 dark:text-white focus:ring-2 focus:ring-brand-500 outline-none">
                     </div>
                 </div>
@@ -297,13 +284,13 @@
                     <label class="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1">Marker Color</label>
                     <div class="flex items-center gap-3">
                         <input type="color" id="carColor" value="#ea580c" class="h-10 w-16 rounded-xl cursor-pointer bg-transparent border-0">
-                        <span class="text-xs text-gray-500">Pick map icon color</span>
+                        <span class="text-xs text-gray-500">Map Icon Color</span>
                     </div>
                 </div>
 
                 <div class="pt-2 flex gap-2 justify-end">
                     <button type="button" onclick="closeAddCarModal()" class="px-4 py-2.5 text-xs font-semibold text-gray-500">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 text-xs font-bold bg-brand-600 active:bg-brand-700 text-white rounded-xl shadow">Add Vehicle</button>
+                    <button type="submit" class="px-5 py-2.5 text-xs font-bold bg-brand-600 active:bg-brand-700 text-white rounded-xl shadow">Save Vehicle</button>
                 </div>
             </form>
         </div>
@@ -314,49 +301,39 @@
         // Application State
         let map = null;
         let destMarker = null;
-        let simInterval = null;
-        let isSimulating = false;
-        let isPickingDestination = false;
-        let activeDeviceCarId = "car-1"; // Default assignment for this device
+        let activeDeviceCarId = "car-1";
 
         let destination = {
-            lat: 37.7397,
-            lng: -119.5730,
-            name: "Yosemite Valley National Park"
+            lat: null,
+            lng: null,
+            name: "Not Set (Tap map or search)"
         };
 
+        // Car 1 & Car 2 initialized clean without hardcoded fake names or positions
         let cars = [
             {
                 id: "car-1",
-                name: "Car 1 - Blue SUV",
-                driver: "Alex Rivera",
-                phone1: "+15550192",
-                phone2: "+15550144",
+                name: "Car 1",
+                driver: "Enter Driver Name",
+                phone1: "",
+                phone2: "",
                 color: "#ea580c",
-                startLat: 37.7749,
-                startLng: -122.4194,
-                currentLat: 37.7749,
-                currentLng: -122.4194,
-                speed: 65,
-                progress: 0.15,
-                status: "driving",
+                currentLat: null,
+                currentLng: null,
+                status: "waiting location",
                 marker: null,
                 polyline: null
             },
             {
                 id: "car-2",
-                name: "Car 2 - Red Sedan",
-                driver: "Sarah Chen",
-                phone1: "+15550881",
-                phone2: "+15550322",
+                name: "Car 2",
+                driver: "Enter Driver Name",
+                phone1: "",
+                phone2: "",
                 color: "#ef4444",
-                startLat: 37.6879,
-                startLng: -122.4702,
-                currentLat: 37.6879,
-                currentLng: -122.4702,
-                speed: 58,
-                progress: 0.08,
-                status: "driving",
+                currentLat: null,
+                currentLng: null,
+                status: "waiting location",
                 marker: null,
                 polyline: null
             }
@@ -372,11 +349,11 @@
             if (carId === 'car-1') {
                 car1Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs';
                 car2Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-                label.innerText = 'Car 1 Phone';
+                label.innerText = 'Car 1';
             } else {
                 car2Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-xs';
                 car1Btn.className = 'py-2 px-2.5 rounded-xl text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-                label.innerText = 'Car 2 Phone';
+                label.innerText = 'Car 2';
             }
         }
 
@@ -388,10 +365,9 @@
         // Initialize Map & Application Data
         window.addEventListener('load', () => {
             renderFleetList();
-            renderProgressList();
             updateStats();
 
-            // Ensure Leaflet JS is fully loaded before initializing map
+            // Load Leaflet and trigger resize calculation
             if (typeof L !== 'undefined') {
                 initMap();
             } else {
@@ -400,59 +376,51 @@
                     leafletScript.addEventListener('load', () => {
                         initMap();
                     });
-                } else {
-                    console.error('Leaflet script tag not found.');
                 }
             }
         });
 
         function initMap() {
-            if (typeof L === 'undefined') {
-                console.error('Leaflet is not loaded yet.');
-                return;
-            }
-            // Leaflet Map Initialization
-            map = L.map('map', { zoomControl: false }).setView([37.75, -121.0], 8);
+            if (typeof L === 'undefined') return;
+
+            // Default initial center fallback until GPS is clicked
+            map = L.map('map', { zoomControl: false }).setView([20.5937, 78.9629], 5);
 
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
 
-            // Add Zoom Control to Bottom Right
             L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-            // Add Click Event on Map to Pick Destination directly
+            // Click Event on Map to Pick Destination directly
             map.on('click', (e) => {
-                setPresetDest(e.latlng.lat, e.latlng.lng, `Selected Location (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
+                setPresetDest(e.latlng.lat, e.latlng.lng, `Destination (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
             });
 
-            // Render Destination Marker
-            updateDestinationMarker();
+            // Force map recalculation for flex containers
+            setTimeout(() => {
+                if (map) map.invalidateSize();
+            }, 300);
 
-            // Render Fleet Markers & Paths
-            cars.forEach(car => {
-                createCarMapElements(car);
-            });
-
-            recenterMap();
+            // Attempt auto-getting position for active car on load
+            syncAssignedCarGPS();
         }
 
         function createCarIconHtml(car) {
             const hazardClass = car.status === 'hazard' ? 'hazard-pulse' : '';
-            const carLabel = car.name.split('-')[0].trim(); // Extract "Car 1", "Car 2"
+            const label = car.name.substring(0, 5);
             return `
                 <div class="car-marker-icon ${hazardClass} flex flex-col items-center justify-center text-white font-bold text-[10px]" style="background-color: ${car.color}; width: 36px; height: 36px;">
                     <i class="fa-solid fa-car text-xs"></i>
-                    <span class="text-[9px] leading-none uppercase font-black">${carLabel}</span>
+                    <span class="text-[8px] leading-none uppercase font-black">${label}</span>
                 </div>
             `;
         }
 
-        function createCarMapElements(car) {
-            if (!map || typeof L === 'undefined') return;
+        function updateCarMapElements(car) {
+            if (!map || typeof L === 'undefined' || !car.currentLat || !car.currentLng) return;
 
-            // Create Leaflet Icon Marker
             const customIcon = L.divIcon({
                 className: '',
                 html: createCarIconHtml(car),
@@ -464,26 +432,31 @@
             if (car.polyline) map.removeLayer(car.polyline);
 
             car.marker = L.marker([car.currentLat, car.currentLng], { icon: customIcon }).addTo(map);
+            
+            let phoneLinks = '';
+            if (car.phone1) phoneLinks += `<a href="tel:${car.phone1}" class="text-blue-600 font-bold block mt-1"><i class="fa-solid fa-phone"></i> Call Phone 1 (${car.phone1})</a>`;
+            if (car.phone2) phoneLinks += `<a href="tel:${car.phone2}" class="text-blue-600 font-bold block"><i class="fa-solid fa-phone"></i> Call Phone 2 (${car.phone2})</a>`;
+
             car.marker.bindPopup(`
                 <div class="text-xs p-1">
                     <strong style="color: ${car.color}">${car.name}</strong><br/>
                     Driver: ${car.driver}<br/>
-                    Speed: ${car.speed} mph<br/>
-                    <a href="tel:${car.phone1}" class="text-blue-600 font-bold block mt-1"><i class="fa-solid fa-phone"></i> Call Driver (${car.phone1})</a>
-                    ${car.phone2 ? `<a href="tel:${car.phone2}" class="text-blue-600 font-bold block"><i class="fa-solid fa-phone"></i> Call Pass. (${car.phone2})</a>` : ''}
+                    ${phoneLinks}
                 </div>
             `);
 
-            // Create Polyline to destination
-            car.polyline = L.polyline([
-                [car.currentLat, car.currentLng],
-                [destination.lat, destination.lng]
-            ], {
-                color: car.color,
-                weight: 4,
-                dashArray: '6, 8',
-                opacity: 0.85
-            }).addTo(map);
+            // Redraw Polyline if destination exists
+            if (destination.lat && destination.lng) {
+                car.polyline = L.polyline([
+                    [car.currentLat, car.currentLng],
+                    [destination.lat, destination.lng]
+                ], {
+                    color: car.color,
+                    weight: 4,
+                    dashArray: '6, 8',
+                    opacity: 0.85
+                }).addTo(map);
+            }
         }
 
         // GPS Current Location Detection
@@ -498,30 +471,23 @@
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     
-                    const car = cars.find(c => c.id === carId) || cars[0];
+                    const car = cars.find(c => c.id === carId);
                     if (car) {
                         car.currentLat = lat;
                         car.currentLng = lng;
-                        car.startLat = lat;
-                        car.startLng = lng;
-                        car.progress = 0.01;
+                        car.status = "Location Active";
 
-                        if (car.marker) car.marker.setLatLng([lat, lng]);
-                        if (car.polyline && destination) {
-                            car.polyline.setLatLngs([
-                                [lat, lng],
-                                [destination.lat, destination.lng]
-                            ]);
+                        if (map) {
+                            updateCarMapElements(car);
+                            focusOnCar(car.id);
                         }
                         
                         renderFleetList();
-                        renderProgressList();
                         updateStats();
-                        focusOnCar(car.id);
                     }
                 },
                 (error) => {
-                    alert('Unable to retrieve your location. Please check browser location permissions.');
+                    alert('Please allow location permissions on your phone browser.');
                 },
                 { enableHighAccuracy: true }
             );
@@ -531,7 +497,7 @@
             const headerEl = document.getElementById('headerDestName');
             if (headerEl) headerEl.innerText = `Destination: ${destination.name}`;
 
-            if (!map || typeof L === 'undefined') return;
+            if (!map || typeof L === 'undefined' || !destination.lat) return;
 
             if (destMarker) map.removeLayer(destMarker);
 
@@ -561,71 +527,93 @@
                     alert('Destination place not found. Try tapping directly on the map!');
                 }
             } catch (e) {
-                // Fallback for offline or CORS issues
-                destination.name = query;
-                updateDestinationMarker();
+                alert('Could not reach search service. Please tap directly on the map to set destination.');
             }
         }
 
         // Distance Calculator (Haversine formula in Miles)
         function getDistanceInMiles(lat1, lon1, lat2, lon2) {
-            const R = 3958.8; // Radius of Earth in miles
+            if (!lat1 || !lon1 || !lat2 || !lon2) return "--";
+            const R = 3958.8;
             const dLat = (lat2 - lat1) * Math.PI / 180;
             const dLon = (lon2 - lon1) * Math.PI / 180;
             const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
                       Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
                       Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
         }
 
-        // Modal Management
+        // Edit Car Modal Handlers
+        function openEditCarModal(carId) {
+            const car = cars.find(c => c.id === carId);
+            if (!car) return;
+
+            document.getElementById('editingCarId').value = car.id;
+            document.getElementById('carName').value = car.name;
+            document.getElementById('driverName').value = car.driver === 'Enter Driver Name' ? '' : car.driver;
+            document.getElementById('phone1').value = car.phone1;
+            document.getElementById('phone2').value = car.phone2;
+            document.getElementById('carColor').value = car.color;
+
+            document.getElementById('modalTitle').innerText = `Edit ${car.name} Details`;
+            document.getElementById('addCarModal').classList.remove('hidden');
+        }
+
         function openAddCarModal() {
+            document.getElementById('editingCarId').value = "";
+            document.getElementById('carName').value = `Car ${cars.length + 1}`;
+            document.getElementById('driverName').value = "";
+            document.getElementById('phone1').value = "";
+            document.getElementById('phone2').value = "";
+            document.getElementById('modalTitle').innerText = "Add Vehicle Details";
             document.getElementById('addCarModal').classList.remove('hidden');
         }
 
         function closeAddCarModal() {
             document.getElementById('addCarModal').classList.add('hidden');
-            document.getElementById('addCarForm').reset();
         }
 
-        function handleAddCar(e) {
+        function handleSaveCar(e) {
             e.preventDefault();
+            const carId = document.getElementById('editingCarId').value;
             const name = document.getElementById('carName').value.trim();
             const driver = document.getElementById('driverName').value.trim();
             const phone1 = document.getElementById('phone1').value.trim();
             const phone2 = document.getElementById('phone2').value.trim();
             const color = document.getElementById('carColor').value;
 
-            // Offset slightly from SF start location
-            const startLat = 37.7749 + (Math.random() - 0.5) * 0.08;
-            const startLng = -122.4194 + (Math.random() - 0.5) * 0.08;
-
-            const newCar = {
-                id: 'car-' + Date.now(),
-                name: name || `Car ${cars.length + 1}`,
-                driver: driver || 'Driver',
-                phone1: phone1,
-                phone2: phone2,
-                color: color,
-                startLat: startLat,
-                startLng: startLng,
-                currentLat: startLat,
-                currentLng: startLng,
-                speed: 60,
-                progress: 0.02,
-                status: 'driving',
-                marker: null,
-                polyline: null
-            };
-
-            cars.push(newCar);
-            if (map) createCarMapElements(newCar);
+            if (carId) {
+                // Update Existing Car
+                const car = cars.find(c => c.id === carId);
+                if (car) {
+                    car.name = name;
+                    car.driver = driver;
+                    car.phone1 = phone1;
+                    car.phone2 = phone2;
+                    car.color = color;
+                    if (car.currentLat && car.currentLng) updateCarMapElements(car);
+                }
+            } else {
+                // Add New Car
+                const newCar = {
+                    id: 'car-' + Date.now(),
+                    name: name || `Car ${cars.length + 1}`,
+                    driver: driver || 'Driver',
+                    phone1: phone1,
+                    phone2: phone2,
+                    color: color,
+                    currentLat: null,
+                    currentLng: null,
+                    status: 'waiting location',
+                    marker: null,
+                    polyline: null
+                };
+                cars.push(newCar);
+            }
 
             renderFleetList();
-            renderProgressList();
             updateStats();
             closeAddCarModal();
-            recenterMap();
         }
 
         // Tab Navigation
@@ -644,19 +632,30 @@
                     panel.classList.add('hidden');
                 }
             });
+
+            if (map) {
+                setTimeout(() => map.invalidateSize(), 100);
+            }
         }
 
         // Open External Google Maps Route
         function openGoogleMapsRoute(carId) {
             const car = cars.find(c => c.id === carId);
-            if (!car) return;
+            if (!car || !car.currentLat) {
+                alert('Please tap "Sync My Location" on this car first to get its coordinates.');
+                return;
+            }
+            if (!destination.lat) {
+                alert('Please set a destination first on the map or search tab.');
+                return;
+            }
             const url = `https://www.google.com/maps/dir/?api=1&origin=${car.currentLat},${car.currentLng}&destination=${destination.lat},${destination.lng}&travelmode=driving`;
             window.open(url, '_blank');
         }
 
         // Native Web Share Trigger
         async function triggerNativeShare() {
-            const carListSummary = cars.map(c => `${c.name} (${c.driver}): ${c.phone1}`).join('\n');
+            const carListSummary = cars.map(c => `${c.name} (${c.driver}): ${c.phone1 || 'No Phone'}`).join('\n');
             const shareData = {
                 title: 'Tribal Roadies Trip Invite',
                 text: `Join our road trip to ${destination.name}!\nRoadies Roster:\n${carListSummary}`,
@@ -666,12 +665,10 @@
             if (navigator.share) {
                 try {
                     await navigator.share(shareData);
-                } catch (err) {
-                    console.log('Share dismissed', err);
-                }
+                } catch (err) {}
             } else {
                 navigator.clipboard.writeText(`${shareData.text}\n${shareData.url}`);
-                alert('Tribal Roadies trip details copied to clipboard!');
+                alert('Trip details copied to clipboard!');
             }
         }
 
@@ -681,37 +678,43 @@
             document.getElementById('carCountText').innerText = cars.length;
 
             listEl.innerHTML = cars.map(car => {
-                const distLeft = getDistanceInMiles(car.currentLat, car.currentLng, destination.lat, destination.lng).toFixed(1);
+                const distLeft = (car.currentLat && destination.lat) 
+                    ? `${getDistanceInMiles(car.currentLat, car.currentLng, destination.lat, destination.lng)} mi` 
+                    : "Not calculated";
+
                 return `
-                    <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 space-y-2.5 hover:border-brand-500 transition shadow-sm">
+                    <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 space-y-2 text-xs shadow-sm">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-2">
                                 <span class="w-3.5 h-3.5 rounded-full shrink-0" style="background-color: ${car.color}"></span>
-                                <h4 class="font-bold text-xs text-gray-800 dark:text-gray-100 truncate max-w-[160px]">${car.name}</h4>
+                                <h4 class="font-bold text-gray-800 dark:text-gray-100 truncate max-w-[150px]">${car.name}</h4>
                             </div>
-                            <button onclick="focusOnCar('${car.id}')" class="text-xs text-brand-600 dark:text-brand-400 font-bold active:underline flex items-center gap-1">
-                                <i class="fa-solid fa-crosshairs text-xs"></i> Map
+                            <button onclick="openEditCarModal('${car.id}')" class="text-xs text-brand-600 dark:text-brand-400 font-bold active:underline flex items-center gap-1">
+                                <i class="fa-solid fa-pen-to-square text-xs"></i> Edit Info
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-1.5 text-[11px] text-gray-500 dark:text-gray-400">
+                        <div class="grid grid-cols-2 gap-1 text-[11px] text-gray-500 dark:text-gray-400">
                             <div>Driver: <strong class="text-gray-700 dark:text-gray-200">${car.driver}</strong></div>
-                            <div>Speed: <strong class="text-gray-700 dark:text-gray-200">${car.speed} mph</strong></div>
-                            <div>Dist left: <strong class="text-gray-700 dark:text-gray-200">${distLeft} mi</strong></div>
-                            <div>Status: <span class="font-bold ${car.status === 'hazard' ? 'text-red-500' : 'text-emerald-500'}">${car.status}</span></div>
+                            <div>Dist left: <strong class="text-gray-700 dark:text-gray-200">${distLeft}</strong></div>
                         </div>
 
                         <div class="grid grid-cols-3 gap-1.5 pt-1 border-t border-gray-200/70 dark:border-gray-600/70">
-                            <a href="tel:${car.phone1}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 active:bg-gray-100 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P1
-                            </a>
-                            ${car.phone2 ? `
-                            <a href="tel:${car.phone2}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 active:bg-gray-100 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P2
+                            ${car.phone1 ? `
+                            <a href="tel:${car.phone1}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P1 Call
                             </a>` : `
-                            <div class="bg-gray-100 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[10px] text-center font-medium">No P2</div>
+                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[10px] text-center font-medium">+ Add P1</button>
                             `}
-                            <button onclick="openGoogleMapsRoute('${car.id}')" class="bg-emerald-600 text-white active:bg-emerald-700 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 shadow-2xs">
+
+                            ${car.phone2 ? `
+                            <a href="tel:${car.phone2}" class="bg-white dark:bg-gray-600 border border-gray-200 dark:border-gray-500 text-gray-700 dark:text-gray-200 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P2 Call
+                            </a>` : `
+                            <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 dark:bg-gray-800 text-gray-400 py-1.5 px-1 rounded-xl text-[10px] text-center font-medium">+ Add P2</button>
+                            `}
+
+                            <button onclick="openGoogleMapsRoute('${car.id}')" class="bg-emerald-600 text-white active:bg-emerald-700 py-1.5 px-1 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1">
                                 <i class="fa-solid fa-map-pin text-white"></i> Maps
                             </button>
                         </div>
@@ -720,92 +723,32 @@
             }).join('');
         }
 
-        function renderProgressList() {
-            const listEl = document.getElementById('progressList');
-            if (!listEl) return;
-            listEl.innerHTML = cars.map(car => {
-                const percent = Math.min(100, Math.round(car.progress * 100));
-                return `
-                    <div class="space-y-1">
-                        <div class="flex justify-between text-[11px]">
-                            <span class="font-bold text-gray-700 dark:text-gray-200">${car.name}</span>
-                            <span class="text-gray-500 dark:text-gray-400">${percent}%</span>
-                        </div>
-                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
-                            <div class="h-2 rounded-full transition-all duration-300" style="width: ${percent}%; background-color: ${car.color}"></div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
         function updateStats() {
-            if (cars.length === 0) return;
-            const avgSpeed = Math.round(cars.reduce((acc, c) => acc + c.speed, 0) / cars.length);
-            document.getElementById('statAvgSpeed').innerText = `${avgSpeed} mph`;
-
-            if (cars.length > 1) {
-                const d1 = getDistanceInMiles(cars[0].currentLat, cars[0].currentLng, destination.lat, destination.lng);
-                const d2 = getDistanceInMiles(cars[1].currentLat, cars[1].currentLng, destination.lat, destination.lng);
-                const gap = Math.abs(d1 - d2).toFixed(1);
+            document.getElementById('statCarCount').innerText = `${cars.length} Vehicles`;
+            if (cars.length >= 2 && cars[0].currentLat && cars[1].currentLat) {
+                const gap = getDistanceInMiles(cars[0].currentLat, cars[0].currentLng, cars[1].currentLat, cars[1].currentLng);
                 document.getElementById('statConvoyGap').innerText = `${gap} mi`;
+            } else {
+                document.getElementById('statConvoyGap').innerText = `-- mi`;
             }
         }
 
         function focusOnCar(carId) {
             const car = cars.find(c => c.id === carId);
-            if (car && map) {
-                map.flyTo([car.currentLat, car.currentLng], 12);
+            if (car && map && car.currentLat) {
+                map.flyTo([car.currentLat, car.currentLng], 14);
                 if (car.marker) car.marker.openPopup();
             }
         }
 
         function recenterMap() {
-            if (!map || cars.length === 0) return;
-            const bounds = L.latLngBounds(cars.map(c => [c.currentLat, c.currentLng]));
-            bounds.extend([destination.lat, destination.lng]);
+            if (!map) return;
+            const activeCars = cars.filter(c => c.currentLat !== null);
+            if (activeCars.length === 0) return;
+
+            const bounds = L.latLngBounds(activeCars.map(c => [c.currentLat, c.currentLng]));
+            if (destination.lat) bounds.extend([destination.lat, destination.lng]);
             map.fitBounds(bounds, { padding: [40, 40] });
-        }
-
-        // Simulation Controls
-        function toggleSimulation() {
-            isSimulating = !isSimulating;
-            const btnLabel = document.getElementById('simBtnLabel');
-            const playBtn = document.getElementById('simPlayBtn');
-
-            if (isSimulating) {
-                playBtn.classList.replace('bg-emerald-600', 'bg-amber-600');
-                if (btnLabel) btnLabel.innerText = "Pause";
-                simInterval = setInterval(simulateStep, 1000);
-            } else {
-                playBtn.classList.replace('bg-amber-600', 'bg-emerald-600');
-                if (btnLabel) btnLabel.innerText = "Simulate";
-                clearInterval(simInterval);
-            }
-        }
-
-        function simulateStep() {
-            cars.forEach(car => {
-                if (car.progress < 1) {
-                    car.progress += 0.01 + Math.random() * 0.005;
-                    car.currentLat = car.startLat + (destination.lat - car.startLat) * car.progress;
-                    car.currentLng = car.startLng + (destination.lng - car.startLng) * car.progress;
-                    
-                    if (car.marker) {
-                        car.marker.setLatLng([car.currentLat, car.currentLng]);
-                    }
-                    if (car.polyline) {
-                        car.polyline.setLatLngs([
-                            [car.currentLat, car.currentLng],
-                            [destination.lat, destination.lng]
-                        ]);
-                    }
-                }
-            });
-
-            renderFleetList();
-            renderProgressList();
-            updateStats();
         }
 
         function setPresetDest(lat, lng, name) {
@@ -816,31 +759,20 @@
             updateDestinationMarker();
             
             cars.forEach(car => {
-                if (car.polyline && map && typeof L !== 'undefined') {
-                    car.polyline.setLatLngs([
-                        [car.currentLat, car.currentLng],
-                        [destination.lat, destination.lng]
-                    ]);
-                }
+                if (car.currentLat && car.currentLng) updateCarMapElements(car);
             });
             recenterMap();
         }
 
-        // Alerts Management
         function triggerFleetAlert(msg) {
-            if (cars.length > 0) cars[0].status = 'hazard';
             document.getElementById('alertMessageText').innerText = msg;
             document.getElementById('alertBanner').classList.remove('hidden');
-            renderFleetList();
         }
 
         function dismissAlert() {
-            cars.forEach(c => c.status = 'driving');
             document.getElementById('alertBanner').classList.add('hidden');
-            renderFleetList();
         }
 
-        // Theme Toggle
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
         }
