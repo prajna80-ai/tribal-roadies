@@ -262,18 +262,24 @@
                     <input type="text" id="carName" required placeholder="e.g. Car 1" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                 </div>
 
-                <div>
-                    <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Driver Name</label>
-                    <input type="text" id="driverName" required placeholder="e.g. Alex" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Driver Name</label>
+                        <input type="text" id="driverName" required placeholder="e.g. Alex" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Owner Name</label>
+                        <input type="text" id="ownerName" placeholder="e.g. Sam" class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Phone #1</label>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Driver Phone (P1)</label>
                         <input type="tel" id="phone1" required placeholder="+1..." class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                     </div>
                     <div>
-                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Phone #2</label>
+                        <label class="block text-[11px] font-bold text-gray-500 mb-0.5">Owner Phone (P2)</label>
                         <input type="tel" id="phone2" placeholder="+1..." class="w-full bg-gray-50 dark:bg-gray-700 border rounded-lg px-2.5 py-1.5 text-xs">
                     </div>
                 </div>
@@ -296,6 +302,7 @@
         let map = null;
         let destMarker = null;
         let activeDeviceCarId = "car-1";
+        let activeDeviceRole = "p1"; // "p1" (Driver) or "p2" (Owner)
         const SYNC_ROOM_KEY = "tribal_roadies_trip_room_1";
 
         let destination = {
@@ -309,9 +316,14 @@
                 id: "car-1",
                 name: "Car 1",
                 driver: "Driver 1",
+                owner: "Owner 1",
                 phone1: "",
                 phone2: "",
                 color: "#ea580c",
+                p1Lat: null,
+                p1Lng: null,
+                p2Lat: null,
+                p2Lng: null,
                 currentLat: null,
                 currentLng: null,
                 status: "waiting location",
@@ -322,9 +334,14 @@
                 id: "car-2",
                 name: "Car 2",
                 driver: "Driver 2",
+                owner: "Owner 2",
                 phone1: "",
                 phone2: "",
                 color: "#ef4444",
+                p1Lat: null,
+                p1Lng: null,
+                p2Lat: null,
+                p2Lng: null,
                 currentLat: null,
                 currentLng: null,
                 status: "waiting location",
@@ -333,25 +350,14 @@
             }
         ];
 
-        function selectDeviceCar(carId) {
+        function selectDeviceCar(carId, role = 'p1') {
             activeDeviceCarId = carId;
-            const car1Btn = document.getElementById('btn-device-car-1');
-            const car2Btn = document.getElementById('btn-device-car-2');
-            const label = document.getElementById('activeDeviceLabel');
-
-            if (carId === 'car-1') {
-                car1Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-brand-600 text-white';
-                car2Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-                label.innerText = 'Car 1';
-            } else {
-                car2Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-brand-600 text-white';
-                car1Btn.className = 'py-1.5 px-2 rounded-lg text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-                label.innerText = 'Car 2';
-            }
+            activeDeviceRole = role;
+            renderFleetList();
         }
 
         function syncAssignedCarGPS() {
-            useCurrentLocationForCar(activeDeviceCarId);
+            useCurrentLocationForCar(activeDeviceCarId, activeDeviceRole);
         }
 
         window.onload = function() {
@@ -359,16 +365,12 @@
             updateStats();
             initMap();
             
-            // Poll for location updates every 5 seconds
             setInterval(fetchCloudData, 5000);
             fetchCloudData();
         };
 
         function initMap() {
-            if (typeof L === 'undefined') {
-                setTimeout(initMap, 200);
-                return;
-            }
+            if (typeof L === 'undefined') return;
 
             try {
                 map = L.map('map', { 
@@ -376,75 +378,26 @@
                     attributionControl: false 
                 }).setView([20.5937, 78.9629], 5);
 
-                // Use Esri World Street Map tiles (bypasses OpenStreetMap tile policy restrictions)
+                // Use policy-compliant Esri World Street Map tiles
                 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
                     maxZoom: 19,
-                    subdomains: ['a', 'b', 'c']
+                    attribution: 'Tiles &copy; Esri'
                 }).addTo(map);
 
                 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
                 map.on('click', (e) => {
-                    setPresetDest(e.latlng.lat, e.latlng.lng, `Location (${e.latlng.lat.toFixed(3)}, ${e.latlng.lng.toFixed(3)})`);
+                    setPresetDest(e.latlng.lat, e.latlng.lng, `Destination (${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)})`);
                 });
 
-                map.invalidateSize();
-                setTimeout(() => { if (map) map.invalidateSize(); }, 300);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 200);
+                setTimeout(() => { if (map) map.invalidateSize(); }, 800);
             } catch (err) {
-                console.error("Map loading error:", err);
+                console.error("Map initialization error:", err);
             }
         }
 
-        function createCarIconHtml(car) {
-            const hazardClass = car.status === 'hazard' ? 'hazard-pulse' : '';
-            return `
-                <div class="car-marker-icon ${hazardClass} font-bold text-[9px] text-white" style="background-color: ${car.color}; width: 32px; height: 32px;">
-                    <i class="fa-solid fa-car"></i>
-                </div>
-            `;
-        }
-
-        function updateCarMapElements(car) {
-            if (!map || typeof L === 'undefined' || !car.currentLat || !car.currentLng) return;
-
-            const customIcon = L.divIcon({
-                className: '',
-                html: createCarIconHtml(car),
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-
-            if (car.marker) map.removeLayer(car.marker);
-            if (car.polyline) map.removeLayer(car.polyline);
-
-            car.marker = L.marker([car.currentLat, car.currentLng], { icon: customIcon }).addTo(map);
-            
-            let phoneLinks = '';
-            if (car.phone1) phoneLinks += `<a href="tel:${car.phone1}" class="text-blue-600 font-bold block mt-1"><i class="fa-solid fa-phone"></i> Call P1 (${car.phone1})</a>`;
-            if (car.phone2) phoneLinks += `<a href="tel:${car.phone2}" class="text-blue-600 font-bold block"><i class="fa-solid fa-phone"></i> Call P2 (${car.phone2})</a>`;
-
-            car.marker.bindPopup(`
-                <div class="text-xs p-1">
-                    <strong style="color: ${car.color}">${car.name}</strong><br/>
-                    Driver: ${car.driver}<br/>
-                    ${phoneLinks}
-                </div>
-            `);
-
-            if (destination.lat && destination.lng) {
-                car.polyline = L.polyline([
-                    [car.currentLat, car.currentLng],
-                    [destination.lat, destination.lng]
-                ], {
-                    color: car.color,
-                    weight: 3,
-                    dashArray: '5, 5',
-                    opacity: 0.8
-                }).addTo(map);
-            }
-        }
-
-        function useCurrentLocationForCar(carId) {
+        function useCurrentLocationForCar(carId, role = 'p1') {
             if (!navigator.geolocation) {
                 alert('Geolocation is not supported by your browser.');
                 return;
@@ -457,8 +410,23 @@
                     
                     const car = cars.find(c => c.id === carId);
                     if (car) {
-                        car.currentLat = lat;
-                        car.currentLng = lng;
+                        if (role === 'p1') {
+                            car.p1Lat = lat;
+                            car.p1Lng = lng;
+                        } else {
+                            car.p2Lat = lat;
+                            car.p2Lng = lng;
+                        }
+
+                        // Calculate effective vehicle position (P1 preferred, or average if both synced)
+                        if (car.p1Lat && car.p2Lat) {
+                            car.currentLat = (car.p1Lat + car.p2Lat) / 2;
+                            car.currentLng = (car.p1Lng + car.p2Lng) / 2;
+                        } else {
+                            car.currentLat = lat;
+                            car.currentLng = lng;
+                        }
+
                         car.status = "Active GPS";
 
                         if (map) {
@@ -487,9 +455,14 @@
                         id: c.id,
                         name: c.name,
                         driver: c.driver,
+                        owner: c.owner,
                         phone1: c.phone1,
                         phone2: c.phone2,
                         color: c.color,
+                        p1Lat: c.p1Lat,
+                        p1Lng: c.p1Lng,
+                        p2Lat: c.p2Lat,
+                        p2Lng: c.p2Lng,
                         currentLat: c.currentLat,
                         currentLng: c.currentLng
                     }))
@@ -511,13 +484,19 @@
                         data.cars.forEach(remoteCar => {
                             const localCar = cars.find(c => c.id === remoteCar.id);
                             if (localCar) {
-                                if (remoteCar.id !== activeDeviceCarId || !localCar.currentLat) {
+                                localCar.p1Lat = remoteCar.p1Lat || localCar.p1Lat;
+                                localCar.p1Lng = remoteCar.p1Lng || localCar.p1Lng;
+                                localCar.p2Lat = remoteCar.p2Lat || localCar.p2Lat;
+                                localCar.p2Lng = remoteCar.p2Lng || localCar.p2Lng;
+                                localCar.driver = remoteCar.driver || localCar.driver;
+                                localCar.owner = remoteCar.owner || localCar.owner;
+                                localCar.phone1 = remoteCar.phone1 || localCar.phone1;
+                                localCar.phone2 = remoteCar.phone2 || localCar.phone2;
+                                
+                                if (remoteCar.currentLat) {
                                     localCar.currentLat = remoteCar.currentLat;
                                     localCar.currentLng = remoteCar.currentLng;
-                                    localCar.driver = remoteCar.driver || localCar.driver;
-                                    localCar.phone1 = remoteCar.phone1 || localCar.phone1;
-                                    localCar.phone2 = remoteCar.phone2 || localCar.phone2;
-                                    if (map && localCar.currentLat) updateCarMapElements(localCar);
+                                    if (map) updateCarMapElements(localCar);
                                 }
                             }
                         });
@@ -588,6 +567,7 @@
             document.getElementById('editingCarId').value = car.id;
             document.getElementById('carName').value = car.name;
             document.getElementById('driverName').value = car.driver.includes('Driver') ? '' : car.driver;
+            document.getElementById('ownerName').value = car.owner && !car.owner.includes('Owner') ? car.owner : '';
             document.getElementById('phone1').value = car.phone1;
             document.getElementById('phone2').value = car.phone2;
             document.getElementById('carColor').value = car.color;
@@ -598,13 +578,10 @@
             document.getElementById('editingCarId').value = "";
             document.getElementById('carName').value = `Car ${cars.length + 1}`;
             document.getElementById('driverName').value = "";
+            document.getElementById('ownerName').value = "";
             document.getElementById('phone1').value = "";
             document.getElementById('phone2').value = "";
             document.getElementById('addCarModal').classList.remove('hidden');
-        }
-
-        function closeAddCarModal() {
-            document.getElementById('addCarModal').classList.add('hidden');
         }
 
         function handleSaveCar(e) {
@@ -612,6 +589,7 @@
             const carId = document.getElementById('editingCarId').value;
             const name = document.getElementById('carName').value.trim();
             const driver = document.getElementById('driverName').value.trim();
+            const owner = document.getElementById('ownerName').value.trim();
             const phone1 = document.getElementById('phone1').value.trim();
             const phone2 = document.getElementById('phone2').value.trim();
             const color = document.getElementById('carColor').value;
@@ -621,6 +599,7 @@
                 if (car) {
                     car.name = name;
                     car.driver = driver || car.driver;
+                    car.owner = owner || car.owner;
                     car.phone1 = phone1;
                     car.phone2 = phone2;
                     car.color = color;
@@ -631,14 +610,14 @@
                     id: 'car-' + Date.now(),
                     name: name || `Car ${cars.length + 1}`,
                     driver: driver || 'Driver',
+                    owner: owner || 'Owner',
                     phone1: phone1,
                     phone2: phone2,
                     color: color,
-                    currentLat: null,
-                    currentLng: null,
+                    p1Lat: null, p1Lng: null, p2Lat: null, p2Lng: null,
+                    currentLat: null, currentLng: null,
                     status: 'waiting location',
-                    marker: null,
-                    polyline: null
+                    marker: null, polyline: null
                 };
                 cars.push(newCar);
             }
@@ -707,6 +686,10 @@
                     ? `${getDistanceInMiles(car.currentLat, car.currentLng, destination.lat, destination.lng)} mi` 
                     : "Not calculated";
 
+                const p1p2Gap = (car.p1Lat && car.p2Lat)
+                    ? `${getDistanceInMiles(car.p1Lat, car.p1Lng, car.p2Lat, car.p2Lng)} mi between P1 & P2`
+                    : null;
+
                 return `
                     <div class="bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-700 rounded-xl p-2.5 space-y-1.5 text-xs shadow-2xs">
                         <div class="flex items-center justify-between">
@@ -719,20 +702,22 @@
 
                         <div class="grid grid-cols-2 gap-1 text-[10px] text-gray-500">
                             <div>Driver: <strong class="text-gray-700 dark:text-gray-200">${car.driver}</strong></div>
+                            <div>Owner: <strong class="text-gray-700 dark:text-gray-200">${car.owner || 'N/A'}</strong></div>
                             <div>Dist: <strong class="text-gray-700 dark:text-gray-200">${distLeft}</strong></div>
+                            <div>P1-P2 Gap: <strong class="text-gray-700 dark:text-gray-200">${p1p2Gap || 'Single GPS'}</strong></div>
                         </div>
 
                         <div class="grid grid-cols-3 gap-1 pt-1 border-t border-gray-200/60">
                             ${car.phone1 ? `
                             <a href="tel:${car.phone1}" class="bg-white dark:bg-gray-600 border text-gray-700 dark:text-gray-200 py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P1
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P1 Call
                             </a>` : `
                             <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 text-gray-400 py-1 rounded text-[10px]">+ P1</button>
                             `}
 
                             ${car.phone2 ? `
                             <a href="tel:${car.phone2}" class="bg-white dark:bg-gray-600 border text-gray-700 dark:text-gray-200 py-1 rounded text-[10px] font-bold flex items-center justify-center gap-1">
-                                <i class="fa-solid fa-phone text-emerald-500"></i> P2
+                                <i class="fa-solid fa-phone text-emerald-500"></i> P2 Call
                             </a>` : `
                             <button onclick="openEditCarModal('${car.id}')" class="bg-gray-100 text-gray-400 py-1 rounded text-[10px]">+ P2</button>
                             `}
@@ -803,11 +788,3 @@
     </script>
 </body>
 </html>
-```
-
-### Key Changes Made:
-- **Replaced Tile Provider:** Changed map tile source to Esri World Street Map (`server.arcgisonline.com`).
-- **Eliminated Blocked Requests:** Esri tiles are open and policy-compliant for web applications, resolving the "Access Blocked" warning immediately.
-- **Maintained Real-Time Cloud Sync:** Keeps active location sharing between Car 1 and Car 2 intact.
-
-Copy all code from `index.html` on the right into your GitHub repository and commit changes!
