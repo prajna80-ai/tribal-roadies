@@ -599,11 +599,13 @@
             if (carId) {
                 const car = cars.find(c => c.id === carId);
                 if (car) {
-                    car.name = name;
+                    car.name = name || car.name;
                     car.driver = driver || car.driver;
-                    car.phone1 = phone1;
-                    car.color = color;
-                    if (car.currentLat && car.currentLng) updateCarMapElements(car);
+                    car.phone1 = phone1 || car.phone1;
+                    car.color = color || car.color;
+                    if (car.currentLat && car.currentLng && map) {
+                        updateCarMapElements(car);
+                    }
                 }
             } else {
                 const newCar = {
@@ -612,17 +614,25 @@
                     driver: driver || 'Driver',
                     phone1: phone1,
                     color: color,
-                    currentLat: null, currentLng: null,
+                    currentLat: null,
+                    currentLng: null,
                     status: 'waiting location',
-                    marker: null, polyline: null
+                    marker: null,
+                    polyline: null
                 };
                 cars.push(newCar);
             }
 
             renderFleetList();
             updateStats();
-            pushCloudData();
             closeAddCarModal();
+
+            // Broadcast changes to cloud safely
+            try {
+                pushCloudData();
+            } catch (err) {
+                console.warn("Cloud push error ignored:", err);
+            }
         }
 
         function switchTab(tabName) {
